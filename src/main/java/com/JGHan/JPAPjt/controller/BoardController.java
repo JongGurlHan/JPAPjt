@@ -4,6 +4,9 @@ import com.JGHan.JPAPjt.model.Board;
 import com.JGHan.JPAPjt.repository.BoardRepository;
 import com.JGHan.JPAPjt.validator.BoardValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,8 +26,18 @@ public class BoardController {
     private BoardValidator boardValidator;
 
     @GetMapping("/list")
-    public String list(Model model){
-        List<Board> boards = boardRepository.findAll();
+    public String list(Model model, Pageable pageable){
+        //Jpa페이지처리, 리턴타입이 Page다. JPA는 기본적으로 페이지가 0부터 시작
+        Page<Board> boards = boardRepository.findAll(pageable);
+        //boards.getTotalElements(); //총 게시글 수
+
+        //시작 페이지 넘버 구하기, 최소값을 1으로 지정
+        int startPage = Math.max(1, boards.getPageable().getPageNumber() -4); //현재페이지 페이지번호를 가져온다.
+        //끝 페이지 넘버 구하기 현재 페이지 +4로 하고,
+        int endPage = Math.min(boards.getTotalPages(), boards.getPageable().getPageNumber() +4);
+
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
         model.addAttribute("boards", boards);
         return "board/list";
     }
