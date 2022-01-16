@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,14 +27,15 @@ public class BoardController {
     private BoardValidator boardValidator;
 
     @GetMapping("/list")
-    public String list(Model model, Pageable pageable){
+    public String list(Model model, @PageableDefault(size = 2) Pageable pageable,
+                       @RequestParam(required = false, defaultValue = "") String searchText){
         //Jpa페이지처리, 리턴타입이 Page다. JPA는 기본적으로 페이지가 0부터 시작
-        Page<Board> boards = boardRepository.findAll(pageable);
-        //boards.getTotalElements(); //총 게시글 수
+        //Page<Board> boards = boardRepository.findAll(pageable);
+        Page<Board> boards = boardRepository.findByTitleContainingOrContentContaining(searchText, searchText, pageable);
 
-        //시작 페이지 넘버 구하기, 최소값을 1으로 지정
+        //시작 페이지 넘버 구하기, Math.max: 입력받은 인자값 중 큰 값을 리턴
         int startPage = Math.max(1, boards.getPageable().getPageNumber() -4); //현재페이지 페이지번호를 가져온다.
-        //끝 페이지 넘버 구하기 현재 페이지 +4로 하고,
+        //끝 페이지 넘버 구하기 현재 페이지 +4로 하고, Math.min
         int endPage = Math.min(boards.getTotalPages(), boards.getPageable().getPageNumber() +4);
 
         model.addAttribute("startPage", startPage);
