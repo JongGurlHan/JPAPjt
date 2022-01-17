@@ -17,10 +17,10 @@ class BoardApiController {
 
     @GetMapping("/boards")
     List<Board> all(@RequestParam(required = false, defaultValue = "") String title,
-                    @RequestParam(required = false, defaultValue = "") String content){
-        if(StringUtils.isEmpty(title) && StringUtils.isEmpty(content)){
+                    @RequestParam(required = false, defaultValue = "") String content) {
+        if (StringUtils.isEmpty(title) && StringUtils.isEmpty(content)) {
             return boardRepository.findAll();
-        }else{
+        } else {
             return boardRepository.findByTitleOrContent(title, content);
         }
     }
