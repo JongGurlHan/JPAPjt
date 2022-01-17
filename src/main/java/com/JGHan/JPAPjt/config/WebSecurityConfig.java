@@ -1,11 +1,14 @@
 package com.JGHan.JPAPjt.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.sql.DataSource;
 
@@ -14,7 +17,7 @@ import javax.sql.DataSource;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    private DataSource dataSource;
+    private DataSource dataSource; //application.properties에있는 dataSource를 넘겨줘서 인증처리
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -37,12 +40,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             throws Exception {
         auth.jdbcAuthentication()
                 .dataSource(dataSource)
-                .usersByUsernameQuery("select email,password,enabled "
-                        + "from bael_users "
-                        + "where email = ?")
-                .authoritiesByUsernameQuery("select email,authority "
+                .passwordEncoder((passwordEncoder())) //스프링에서 인증처리할때 인코더를 이용해서 비밀번호 암호화
+                .usersByUsernameQuery("select username,password,enabled " // 순서대로 해야한다.
+                        + "from user "  //뒤에 공백주의!!
+                        + "where username = ?") //알아서 ?값이 들어간다.
+                .authoritiesByUsernameQuery("select username, name "
                         + "from authorities "
                         + "where email = ?");
+    }
+    //Authentication: 로그인
+    //Authroization: 권한
+
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
 }
