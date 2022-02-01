@@ -17,44 +17,40 @@ import javax.sql.DataSource;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    private DataSource dataSource; //application.properties에있는 dataSource를 넘겨줘서 인증처리
+    private DataSource dataSource;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                    .antMatchers("/", "/home").permitAll() //로그인 안해도 접근가능한 페이지
-                    .anyRequest().authenticated() //로그인해야 접근 가능 페이지
-                    .and()
+                .antMatchers("/", "/account/register", "/css/**").permitAll()
+                .anyRequest().authenticated()
+                .and()
                 .formLogin()
-                    .loginPage("/login") //로그인 페이지, 만약 로그인 안하고 다른페이지 접근시도하면 여기로 redirect
-                    .permitAll() // 누구나 로그인할 수 있도록
-                    .and()
+                .loginPage("/account/login")
+                .permitAll()
+                .and()
                 .logout()
-                    .permitAll(); //누구나 로그아웃할 수 있도록
+                .permitAll();
     }
 
-    //스프링 내부에서 인증처리
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth)
             throws Exception {
         auth.jdbcAuthentication()
                 .dataSource(dataSource)
-                .passwordEncoder((passwordEncoder())) //스프링에서 인증처리할때 인코더를 이용해서 비밀번호 암호화
-                .usersByUsernameQuery("select username,password,enabled " // 순서대로 해야한다.
-                        + "from user "  //뒤에 공백주의!!
-                        + "where username = ?") //알아서 ?값이 들어간다.
-                .authoritiesByUsernameQuery("select username, name "
-                        + "from authorities "
-                        + "where email = ?");
+                .passwordEncoder(passwordEncoder())
+                .usersByUsernameQuery("select username, password, enabled "
+                        + "from user "
+                        + "where username = ?")
+                .authoritiesByUsernameQuery("select u.username, r.name "
+                        + "from user_role ur inner join user u on ur.user_id = u.id "
+                        + "inner join role r on ur.role_id = r.id "
+                        + "where u.username = ?");
     }
-    //Authentication: 로그인
-    //Authroization: 권한
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
